@@ -1,0 +1,16 @@
+include ../layout/mixins
+
+doctype html
+html(lang="ru")
+    head
+        meta(charset='UTF-8')
+        meta(name='viewport', content='width=device-width, initial-scale=1.0')
+        meta(http-equiv='X-UA-Compatible', content='ie=edge')
+        block meta
+        link(href="/css/style.css", rel="stylesheet")
+    body
+        .wrapper
+            include ../layout/header
+            block content
+            include ../layout/footer
+        script(src="/js/bundle.js")
