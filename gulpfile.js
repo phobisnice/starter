@@ -7,20 +7,36 @@ const autoprefixer = require('gulp-autoprefixer');
 const cleanCSS = require('gulp-clean-css');
 const sourcemaps = require('gulp-sourcemaps');
 const del = require('del');
-const concat = require('gulp-concat');
-const uglify = require('gulp-uglify');
-const babel = require('gulp-babel');
 const imagemin = require('gulp-imagemin');
 const svgstore = require('gulp-svgstore');
 const rename = require("gulp-rename");
 const gulpif = require('gulp-if');
+const webpack = require('webpack-stream');
 const browserSync = require('browser-sync').create();
 
 const isDev = !process.argv.includes('--prod');
 
-let jsFiles = [
-    'src/js/script.js'
-]
+let webpackConfig = {
+    output: {
+        filename: 'bundle.js'
+    },
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env']
+                    }
+                }
+            }
+        ]
+    },
+    mode: isDev ? 'development' : 'production',
+    devtool: isDev ? 'eval-source-map' : 'none'
+};
 
 function html() {
     return gulp.src('src/pug/pages/**/*.pug')
@@ -60,16 +76,8 @@ function styles() {
 };
 
 function scripts() {
-    return gulp.src(jsFiles)
-        .pipe(gulpif(isDev, sourcemaps.init()))
-        .pipe(babel({
-            presets: ['@babel/env']
-        }))
-        .pipe(concat('bundle.js'))
-        .pipe(uglify({
-            toplevel: true
-        }))
-        .pipe(gulpif(isDev, sourcemaps.write()))
+    return gulp.src('./src/js/index.js')
+        .pipe(webpack(webpackConfig))
         .pipe(gulp.dest('build/js'))
         .pipe(gulpif(isDev, browserSync.stream()));
 }
