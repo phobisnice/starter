@@ -1,5 +1,8 @@
-'use strict';
+"use strict";
 
-import 'core-js/stable';
+import "core-js/stable";
+import svg4everybody from "svg4everybody";
 
-console.log('ready');
+svg4everybody();
+
+console.log("ready");
