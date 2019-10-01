@@ -11,10 +11,13 @@ const imagemin = require("gulp-imagemin");
 const svgstore = require("gulp-svgstore");
 const rename = require("gulp-rename");
 const gulpif = require("gulp-if");
+const pngquant = require('imagemin-pngquant');
+const mozjpeg = require('imagemin-mozjpeg');
 const webpack = require("webpack-stream");
 const browserSync = require("browser-sync").create();
 
 const isDev = !process.argv.includes("--prod");
+const isProd = !isDev;
 
 const webpackConfig = {
   output: {
@@ -95,13 +98,16 @@ function scripts() {
 
 function img() {
   return gulp
-    .src("src/img/**/*.{jpg, png, gif}")
-    .pipe(
+    .src("src/img/*.{jpg,png,gif,svg}")
+    .pipe(gulpif(isProd,
       imagemin([
         imagemin.gifsicle({ interlaced: true }),
-        imagemin.jpegtran({ progressive: true }),
-        imagemin.optipng({ optimizationLevel: 7 })
-      ])
+        pngquant({ quality: [0.7, 0.7] }),
+        mozjpeg({ quality: 80 }),
+        imagemin.svgo({
+          plugins: [{ removeViewBox: false }]
+        })
+      ]))
     )
     .pipe(gulp.dest("build/img"));
 }
@@ -112,7 +118,11 @@ function svg() {
     .pipe(
       imagemin([
         imagemin.svgo({
-          plugins: [{ cleanupIDs: true }]
+          plugins: [
+            { cleanupIDs: true },
+            { removeAttrs: { attrs: '(fill|stroke)' } },
+            { removeViewBox: false }
+          ]
         })
       ])
     )
@@ -127,13 +137,14 @@ function watch() {
   gulp.watch("src/scss/**/*.scss", styles);
   gulp.watch("src/js/**/*.js", scripts);
   gulp.watch("src/img/svg/*.svg", svg);
+  gulp.watch(["src/img/**/*.jpg", "src/img/**/*.png"], img);
 }
 
-gulp.task("clear", function() {
+gulp.task("clear", function () {
   return del("build/*");
 });
 
-gulp.task("serve", function() {
+gulp.task("serve", function () {
   browserSync.init({
     server: {
       baseDir: "./build"
